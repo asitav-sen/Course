@@ -1,0 +1,133 @@
+---
+title: "Probability Distributions"
+author: "Easy Data Science"
+date: "6/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(datasets)
+library(tidyr)
+library(ggthemes)
+library(moments)
+library(lubridate)
+library(data.world)
+```
+
+
+## Distribution
+
+ 
+In your website, 1 in every 5 people spend more than 30 seconds. If you pick random 10 people, what is the probability that 2 of them have spent more than 30 seconds.
+- less than or equal 3
+
+
+```{r}
+p_s30<-1/5
+r_s<-10
+v<-2
+dbinom(v,r_s,p_s30)
+
+v<-c(0,1,2,3)
+sum(dbinom(v,r_s,p_s30))
+
+ps<-c(0.25)
+pbinom(ps, r_s, p_s30)
+
+rbinom(2,10,0.2)
+
+dpois()
+dnorm()
+```
+
+
+What is the probability that in 1 day, 5 sales will be executed, when mean sales per day is 4?
+
+```{r}
+dpois(5,4)
+sum(dpois(c(0:5),4))
+
+c(0:5) %>% 
+  dpois(4) %>% 
+  sum()
+
+rpois(5, 4)
+```
+
+What is the probability that a randomly selected person spends more than 50 seconds, given mean is 45 seconds and sd is 10?
+
+
+```{r}
+dnorm(50, 45, 10)
+
+1-sum(dnorm(0:50, 45, 10))
+
+```
+
+## Confidence Interval
+
+```{r}
+s.size<- 25
+s.mean<- 300
+s.sd<- 18.5
+#confidence interval of 95%
+
+m <- qt(0.975,df=s.size-1)*s.sd/sqrt(s.size)
+
+l.m<-s.mean-m
+h.m<-s.mean+m
+
+```
+
+
+
+```{r}
+s.size1 <- 15
+s.mean1 <- 310 
+s.sd1 <- 18.5
+
+s.size2 <- 15
+s.mean2 <- 300
+s.sd2 <- 16.4
+
+pool.var = ((s.size1-1)*s.sd1^2 + (s.size2-1)*s.sd2^2) / (s.size1+s.size2-2)
+
+m <- qt(0.975,df=s.size1+s.size2-2)*sqrt(pool.var/s.size1 + pool.var/s.size1)
+
+ldm <- (s.mean1-s.mean2) - m
+udm <- (s.mean1-s.mean2) + m
+
+
+```
+
+
+
+```{r}
+s.size <- 100
+s.prop <- .56
+
+m <- qnorm(0.975)*sqrt(s.prop*(1-s.prop)/s.size)
+
+lp<-s.prop-m
+hp<-s.prop+m
+
+```
+
+
+```{r}
+s.size1 <- 100
+s.prop1 <- .62
+
+s.size2 <- 100
+s.prop2 <- .46
+
+
+m <- qnorm(0.975)*sqrt(s.prop1*(1-s.prop1)/s.size1 + s.prop2*(1-s.prop2)/s.size2)
+
+lpd<-s.prop1-s.prop2-m
+upd<-s.prop1-s.prop2+m
+
+```

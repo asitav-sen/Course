@@ -1,0 +1,314 @@
+---
+title: "Descriptive statistics"
+author: "Easy Data Science"
+date: "6/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(datasets)
+library(tidyr)
+library(ggthemes)
+library(moments)
+library(lubridate)
+library(data.world)
+```
+
+
+
+## Summarize
+
+
+```{r}
+x<-read.csv("https://query.data.world/s/ycimehoogc3wiwgkd65z7d24v6mqik", header=TRUE, stringsAsFactors=FALSE)
+
+x
+
+names(x)[1]<-"EnglishSpeaker"
+names(x)[6]<-"ClassAttribute"
+names(x)[4]<-"Semester"
+
+x$EnglishSpeaker<-as.factor(x$EnglishSpeaker)
+x$Semester<-as.factor(x$Semester)
+x$ClassAttribute<-as.factor(x$ClassAttribute)
+
+x<- x %>%
+  mutate(EnglishSpeaker=ifelse(EnglishSpeaker==1,"yes","no"))%>%
+  mutate(ClassAttribute=case_when(ClassAttribute==1 ~ "low",
+                                  ClassAttribute==2 ~ "medium",
+                                  ClassAttribute==3 ~ "high"))%>%
+  mutate(Semester=ifelse(Semester==1, "Summer", "Regular"))%>%
+  select(1,4,6)
+
+x
+```
+
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+
+
+x%>%
+  group_by(ClassAttribute)%>%
+  summarise(Count=n())%>%
+  mutate(CountPercent=Count/sum(Count))%>%
+  ggplot(aes(y=Count,
+             #x=ClassAttribute, 
+             x = reorder(ClassAttribute,Count),
+             )
+         )+
+  #geom_col()+
+  geom_col(width = 0.5,fill='turquoise')+
+  geom_text(aes(y=Count-6, label=Count), color="white", size=10)+
+  labs(title = "Class Attribute", 
+       subtitle = "Teaching assistant evaluation",
+       x="Attribute",
+       y="Count",
+       caption = "Source: UCI machine learning repository")+
+  theme_clean()
+  
+  
+
+
+
+```
+
+
+
+```{r}
+x%>%
+  group_by(EnglishSpeaker)%>%
+  summarise(low=sum(ClassAttribute=="low"), medium=sum(ClassAttribute=="medium"), high=sum(ClassAttribute=="high"))%>%
+  tidyr::gather("ClassAttribute","Count",-1)%>%
+  ggplot(aes(x=EnglishSpeaker, y=Count, fill=ClassAttribute))+
+  geom_col(position="dodge")+
+  geom_text(aes(y=Count-2, label=Count), 
+            position = position_dodge(width = 1
+                                      ),
+            color="white", 
+            size=5
+            )+
+  labs(title = "Class Attribute by native language", 
+       subtitle = "Teaching assistant evaluation",
+       x="English Speaker",
+       y="Count",
+       caption = "Source: UCI machine learning repository")+
+  theme_clean()
+
+x%>%
+  group_by(EnglishSpeaker)%>%
+  summarise(low=sum(ClassAttribute=="low"), medium=sum(ClassAttribute=="medium"), high=sum(ClassAttribute=="high"))%>%
+  tidyr::gather("ClassAttribute","Count",-1)%>%
+  ggplot(aes(#x=EnglishSpeaker,
+             x=reorder(EnglishSpeaker,Count),
+             y=Count, fill=ClassAttribute))+
+  geom_col(position="fill", width = 0.5)+
+  geom_text(aes(label=Count), 
+            position = position_fill(vjust = 0.5),
+            color="white", 
+            size=5
+            )+
+  labs(title = "Class Attribute by native language", 
+       subtitle = "Teaching assistant evaluation",
+       x="English Speaker",
+       y="Count",
+       caption = "Source: UCI machine learning repository")+
+  theme_clean()
+```
+
+
+
+```{r}
+set.seed(1)
+df <- data.frame(
+  sex=factor(rep(c("F", "M"), each=200)),
+  weight=round(c(rnorm(200, mean=40, sd=4), rnorm(200, mean=50, sd=5)))
+  )
+df
+
+ggplot(df, aes(x=weight)) + 
+  geom_histogram(binwidth=1, color="black", fill="blue", alpha=0.3)+
+  labs(title="Histogram of weight",
+       y="frequency")+
+  theme_clean()
+
+ggplot(df, aes(x=weight)) + 
+ #geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+
+  labs(title="Density of weight")+
+  theme_clean()
+
+ggplot(df, aes(x=weight, color=sex, fill=sex)) +
+  geom_histogram(alpha=0.2, position="identity")+ 
+  labs(title="Histogram of weight by sex")+
+  theme_clean()
+
+df%>%
+  mutate(weight=case_when(
+    weight<40 ~ "30-39",
+    weight>=40 & weight<50 ~ "40-49",
+    weight>=50 & weight<60 ~ "50-59",
+    weight>=60  ~ "60-69"
+  ))%>%
+  group_by(weight)%>%
+  summarise(Count=n())%>%
+  mutate(cumcount=cumsum(Count))%>%
+  mutate(cumper=cumcount*100/sum(Count))%>%
+  ggplot(aes(x=weight, y=cumper, group=1))+geom_line(color="black")+geom_point()+
+  labs(title="Cumulative Percentage of Weight(Range)",
+       x="Weight Ranges",
+       y="Cumulative Percentage (%)")+
+  theme_clean()
+
+```
+
+
+
+```{r}
+
+if(!require(WDI)){
+    install.packages("WDI")
+    library(WDI)
+}
+
+WDIsearch('unemployment, total')   #*.NE = National Estimate
+
+x = WDI(indicator='SL.UEM.TOTL.ZS', country=c('IN'))
+
+x %>% 
+  filter(is.na(x$SL.UEM.TOTL.ZS))
+sum(is.na(x))
+x<-na.omit(x)
+
+x$year<-lubridate::ymd(x$year, truncated = 2L)
+
+x%>%
+  ggplot(aes(x=year, y=SL.UEM.TOTL.ZS))+
+  geom_line()+
+  geom_point()+
+  labs(x="Year",
+       y="Unemployment Rate (% of labour force)",
+       title = "Uemployment Rate by year in India",
+       caption = "Source: World Bank")+
+  #coord_cartesian(ylim=c(0,8))+
+  theme_clean()
+
+fig<-x%>%ggplot(aes(x=year, y=SL.UEM.TOTL.ZS))+
+  geom_line()+
+  geom_point()+
+  labs(x="Year",
+       y="Unemployment Rate (% of labour force)",
+       title = "Uemployment Rate by year in India",
+       caption = "Source: World Bank")+
+  theme_clean()
+
+fig<- plotly::ggplotly(fig)
+fig
+
+mtcars%>%
+  ggplot(aes(x=mpg,y=hp))+geom_point(aes(colour=hp))+
+  labs(x="Fuel consumption (Miles per gallon)",
+       y="Engine power (HP)",
+       title = "Relationship between Engine power and fuel consumption"
+       )+
+  theme_clean()
+```
+
+
+
+## Central Location
+
+
+```{r}
+mean(x$SL.UEM.TOTL.ZS)
+median(x$SL.UEM.TOTL.ZS)
+
+
+getMode <- function(x) {
+keys <- unique(x)
+keys[which.max(tabulate(match(x, keys)))]
+}
+
+getMode(x$SL.UEM.TOTL.ZS)
+
+
+```
+
+
+## Non Central
+
+```{r}
+
+range(x$SL.UEM.TOTL.ZS)
+var(x$SL.UEM.TOTL.ZS)
+sd(x$SL.UEM.TOTL.ZS)
+
+sd(x$SL.UEM.TOTL.ZS)/mean(x$SL.UEM.TOTL.ZS)
+
+summary(x$SL.UEM.TOTL.ZS)
+
+IQR(x$SL.UEM.TOTL.ZS)
+
+quantile(x$SL.UEM.TOTL.ZS,0.75)
+
+```
+
+## Skewness
+
+```{r}
+plot(density(x$SL.UEM.TOTL.ZS))
+hist(x$SL.UEM.TOTL.ZS)
+moments::skewness(x$SL.UEM.TOTL.ZS)
+```
+
+
+
+```{r}
+ggplot(x, aes(x=SL.UEM.TOTL.ZS))+ geom_boxplot()+
+    labs(x="",
+       x="Unemployment Rate (%)",
+       title = "Distribution(Boxplot)"
+       )+
+  theme_clean()
+
+boxplot(x$SL.UEM.TOTL.ZS)
+boxplot.stats(x$SL.UEM.TOTL.ZS)$out
+
+x[which(x$SL.UEM.TOTL.ZS %in% boxplot.stats(x$SL.UEM.TOTL.ZS)$out), ]
+```
+
+# Why Graphs are important?
+
+
+```{r}
+anscom<-read.csv("https://gist.githubusercontent.com/ericbusboom/b2ac1d366c005cd2ed8c/raw/c92c66e43d144fa9c29dbd602d5af6988e8db533/anscombes.csv")
+anscom %>% 
+  group_by(dataset) %>% 
+  summarise(mean_x=round(mean(x),1), 
+            mean_y=round(mean(y),1),
+            var_x=round(var(x),1),
+            var_y=round(var(y),1)) %>% knitr::kable()
+anscom %>% 
+  ggplot(aes(x=x,y=y))+
+  geom_point(size=2)+
+  geom_smooth(method="lm", se=F, fullrange=T)+
+  ggpmisc::stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE)+
+  facet_wrap(~dataset)+
+  theme_clean()
+
+anscom %>% 
+  group_by(dataset) %>% 
+  summarise(median_x=round(median(x),1), 
+            median_y=round(median(y),1),
+            max_x=round(max(x),1),
+            max_y=round(max(y),1)) %>% knitr::kable()
+```
+

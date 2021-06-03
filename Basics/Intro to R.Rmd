@@ -1,0 +1,114 @@
+---
+title: "Intro to R"
+author: "Easy Data Science"
+date: "6/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(datasets)
+library(tidyr)
+library(ggthemes)
+library(moments)
+library(lubridate)
+library(data.world)
+```
+
+## Vector and Matrix
+
+```{r cars}
+
+x <- 1
+1->x
+str(x)
+class(x)
+x <- c(1,2,3)
+x[3]
+str(x)
+class(x)
+
+x<- 1:3
+x
+str(x)
+class(x)
+x<- seq(1,3,1)
+x
+str(x)
+class(x)
+
+x<- seq(to=3, by=1, from=1)
+x
+str(x)
+class(x)
+
+x<-c("a","b","c")
+x[2]
+str(x)
+class(x)
+
+x<- factor(c("a","b","c"), levels = c("a","b","c"), labels = c("x","y","z"))
+str(x)
+class(x)
+
+x<-Sys.time()
+str(x)
+class(x)
+
+x<-Sys.Date()
+str(x)
+class(x)
+
+x<-matrix(seq(1:10),5,2)
+x
+str(x)
+class(x)
+```
+
+## Data Frame
+
+```{r pressure, echo=FALSE}
+Date<-c('2019-01-01','2019-01-02', '2019-01-02','2019-01-03', '2019-01-04')
+Rain<-c(4,0,0,2,1)
+WDay<-lubridate::wday(Date, label=T)
+Observer<-c("Raghu", "Raghav", "Raman", "Raghav", "Raghu")
+x<-data.frame(Date,Rain,WDay,Observer)
+x
+str(x)
+x$Date<-as.Date(x$Date)
+
+```
+
+## List
+
+```{r}
+l<-list(x=x, y=c(0,1,2,3,4,5), z=c("a","b","c"), w=matrix(seq(1:10),5,2))
+l
+
+l$x$Date
+l$y
+l$z
+l$w
+
+str(l)
+class(l)
+
+str(l$x)
+class(l$y)
+
+```
+
+
+
+## Importing and Exporting
+
+
+```{r}
+
+x<-read.csv("path_to_file/train.csv")  # Enter path to file
+write.csv(x,file="train.csv")
+
+```
+
